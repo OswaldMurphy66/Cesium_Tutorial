@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<!-- text of browser's title/tab -->
+<title>Intergrated fieldwork Demo</title>
+<!-- icon displayed in the address bar -->
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Include the CesiumJS JavaScript and CSS files -->
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.78/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.78/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+<!-- design of the website -->
+<!-- CSS used here -->
+<style>
+<!-- Activation of Visual tools in Cesium -->
+@import url(./Cesium/Widgets/widgets.css)
+
+*{
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header {
+  background-color: #666;
+  height: 150px;
+  padding: 5px;
+  text-align: center;
+  font-size: 20px;
+  color: white;
+}
+
+article {
+  float: left;
+  padding: 20px;
+  width: 70%;
+  background-color: #ccc;
+
+}
+
+nav {
+  float: right;
+  width: 30%;
+  background: #f1f1f1;
+  padding: 20px;
+  display: inline-block;
+}
+
+/* Clear floats after the columns */
+section::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Style the footer */
+footer {
+  background-color: #777;
+  padding: 10px;
+  text-align: center;
+  color: white;
+}
+
+/* Style: button */
+.button{
+  background-color: white;
+  border-radius: 5px;
+  border: 1.5px solid #000;
+  box-shadow: 0 5px 12px 0 rgba(0,0,0,0.3), 0 6px 20px 0 rgba(0,0,0,0.25);
+  color: black;
+  height: 18px;
+  position: absolute;
+  font-size: 14px;
+  line-height: 0.7;
+}
+
+.button:hover{
+  background-color: #ccc;
+}
+
+.button:active{
+  background-color: white;
+  transform: translateY(2px);
+}
+
+.button:focus{
+  background-color: #706e6e;
+  cursor: wait;
+}
+
+.button:visited{
+  background-color: #706e6e;
+}
+
+/* Style: checkbox */
+input[type="checkbox"] {
+  position: absolute;
+  left: -20px;
+}
+
+input[type="checkbox"] + label {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+input[type="checkbox"] + label:before {
+  width: 35px;
+  height: 13px;
+  border-radius: 30px;
+  border: 2px solid #ddd;
+  background-color: #EEE;
+  content: "";
+  margin-right: 10px;
+  transition: background-color 0.5s linear;
+}
+
+input[type="checkbox"] + label:after {
+  width: 13px;
+  height: 13px;
+  border-radius: 30px;
+  background-color: #fff;
+  content: "";
+  transition: margin 0.1s linear;
+  box-shadow: 0px 0px 5px #aaa;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+}
+
+input[type="checkbox"]:checked + label:before {
+  background-color: #2b8718;
+}
+
+input[type="checkbox"]:checked + label:after {
+  margin: 0 0 0 22px;
+}
+
+</style>
+</head>
+
+
+
+<!-- main content of the website -->
+<body>
+    <header>
+      <h1> Visualization of Stadtmitte Campus <br> </h1>
+    </header>
+
+<section>
+    <!-- checkboxes/buttons -->
+    <nav>
+        <b>3D Point Clouds</b>
+        <br>
+        <br>
+          <input type="checkbox" id="pc2_button" onclick="Check_PC2()" > <label for="pc2_button"> Demo indoor </label>
+          <button class="button" id="zoom_pc2" style="position: absolute; right: 20px;" onclick="zoompc2()" > Zoom </button>
+        <br>
+        <br>
+          <input type="checkbox" id="pc3_button" onclick="Check_PC3()"> <label for="pc3_button"> Demo playgronud </label>
+          <button class="button" id="zoom_pc3" style="position: absolute; right: 20px;" onclick="zoompc3()" > Zoom </button>
+        <br>
+        <br>
+        <br>
+          <b>Orthophotos</b>
+        <br>
+        <br>
+          <input type="checkbox" id="ortho1_button" onclick="Check_OP1()" > <label for="ortho1_button"> Airport brief</label>
+          <button class="button" id="zoom_ortho1" style="position: absolute; right: 20px;" onclick="zoomortho1()" > Zoom </button>
+        <br>
+        <br>
+          <b>Polygon</b>
+        <br>
+        <br>
+          <input type="checkbox" id="Runway_button" onclick="Check_RW()" > <label for="Runway_button"> Anflugblatt </label>
+          <button class="button" id="zoom_Runway" style="position: absolute; right: 20px;" onclick="zoomRunway()" > Zoom </button>
+        <br>      
+        <br>
+        <br>
+        <b>NOTE: </b>Loading the trajectories takes a few moments.
+      <br>
+      <br>
+    </nav>
+
+
+    <!-- Cesium Viewer -->
+    <article>
+        <div id="cesiumContainer" style="width: 100%; height:600px"></div>
+    
+        <script>
+            //default access token from my ion account
+            Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjOTM4YzlmOS1jYzI5LTRhZDEtYTY1My1kMTBjMTk2NmEyMjMiLCJpZCI6Mjc0MDUsInNjb3BlcyI6WyJhc3IiLCJnYyJdLCJpYXQiOjE1ODk0NDI4NjF9.Y_FH8B4JpzRCmy-gMg15DHTStKYk4FVsyeFZM243QD4";
+
+            // Initialize the Cesium Viewer in the HTML element with the `cesiumContainer` ID.
+            var viewer = new Cesium.Viewer('cesiumContainer',{
+              terrainProvider: new Cesium.CesiumTerrainProvider({
+                  url: Cesium.IonResource.fromAssetId(3956),
+              }),
+              // terrainProvider: new Cesium.CesiumTerrainProvider({
+              //   url: Cesium.IonResource.fromAssetId(1121911),
+              // }),//load local terrain --- ???need to be corrected
+              imageryProvider: Cesium.createWorldImagery({
+                style: Cesium.IonWorldImageryStyle.AERIAL
+              })
+            });
+             // Load Cesium World Terrain
+            viewer.terrainProvider = Cesium.createWorldTerrain({
+              requestWaterMask : true, // required for water effects
+              requestVertexNormals : true // required for terrain lighting
+            });
+             // Enable depth testing so things behind the terrain disappear.
+            viewer.scene.globe.depthTestAgainstTerrain = false;
+
+			
+            //add point cloud
+
+            //var pc_demo2 = viewer.scene.primitives.add(
+            //  new Cesium.Cesium3DTileset({
+            //    url: Cesium.IonResource.fromAssetId(1113299),
+            //  })
+            //);
+
+            //var pc_demo3 = viewer.scene.primitives.add(
+            //  new Cesium.Cesium3DTileset({
+            //    url: Cesium.IonResource.fromAssetId(1113301),
+            //  })
+            //);
+
+
+            //add orthophotos
+            var ortho_demo1 = viewer.imageryLayers.addImageryProvider(
+              new Cesium.IonImageryProvider({ assetId: 1113345 })
+            );
+
+            // Add kml data series
+            var avoid_urban = Cesium.IonResource.fromAssetId(1136990).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var avoid_traffic_test = Cesium.IonResource.fromAssetId(1137465).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var Go_Around_Course_1 = Cesium.IonResource.fromAssetId(1137091).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var Go_Around_Course_2 = Cesium.IonResource.fromAssetId(1137092).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var Landing_Area_1 = Cesium.IonResource.fromAssetId(1136986).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var Landing_area_2 = Cesium.IonResource.fromAssetId(1136987).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+
+            var Markings_Fixed_Point = Cesium.IonResource.fromAssetId(1137089).then(function (resource) {
+                var options = {
+                    camera: viewer.scene.camera,
+                    canvas: viewer.scene.canvas
+                };
+                viewer.dataSources.add(Cesium.KmlDataSource.load(resource, options));
+            });
+			//// Adding polygon: rectangle landing areas based in positions            
+   //         var greenPolygon_1 = viewer.entities.add({
+   //           name: "Landing area 1",
+   //           polygon: {
+   //             hierarchy: Cesium.Cartesian3.fromDegreesArray([ 9.397084,48.529799,9.397030346347082,48.52954313865634, 9.402249044248864, 48.5290861766583, 9.402315173526649,48.52933265154202]),
+   //             material: Cesium.Color.GREEN.withAlpha(0.7),
+   //           },
+   //         });
+   //         greenPolygon_1.position=Cesium.Cartesian3.fromDegrees(9.399841076770093,48.52944079933089);
+   //         greenPolygon_1.label={
+   //             // position:
+   //             text:'landing area 1',
+   //             color : Cesium.Color.fromCssColorString('#fff'),
+   //             font:'normal 32px MicroSoft YaHei',
+   //             showBackground : true,
+   //             scale : 0.5,
+   //             horizontalOrigin : Cesium.HorizontalOrigin.LEFT_CLICK,
+   //             verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+   //             disableDepthTestDistance : 10000.0,
+   //         };
+            
+			//var greenPolygon_2 = viewer.entities.add({
+			//  name: "Landing area 2",
+			//  polygon: {
+			//    hierarchy: Cesium.Cartesian3.fromDegreesArray([9.392909927976849,48.529241474720855,9.392933581948556,48.52896411764348, 9.401435162641437,48.529173138888915, 9.401350004491292,48.52940537604243]),
+			//    material: Cesium.Color.GREEN.withAlpha(0.7),
+			//  },
+			//});
+			//greenPolygon_2.position=Cesium.Cartesian3.fromDegrees(9.39670935301936,48.529223878988454);
+			//greenPolygon_2.label={
+			//    // position:
+			//    text:'landing area 2',
+			//    color : Cesium.Color.fromCssColorString('#fff'),
+			//    font:'normal 32px MicroSoft YaHei',
+			//    showBackground : true,
+			//    scale : 0.5,
+			//    horizontalOrigin : Cesium.HorizontalOrigin.LEFT_CLICK,
+			//    verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+			//    disableDepthTestDistance : 10000.0
+			//};
+			
+			//<!--// Draw an ellipse for city area which planes should avoid 
+   //         var entity = viewer.entities.add({
+   //                 name: "City area",
+   //                 // indicating center of the ellipse
+   //                 position: Cesium.Cartesian3.fromDegrees( 9.406917946333378,48.519638478928805),
+   //                 ellipse: {
+   //                     show: true,
+   //                     semiMajorAxis: 700.0, // semi major axis
+   //                     semiMinorAxis: 700.0, // semi minor axis
+   //                     height: 0, // height above reference surface
+   //                                  //default: HeightReference.NONE
+   //                                  // NONE:	absolute position；
+			//						 // CLAMP_TO_GROUND:	fixed on ground；
+			//						 // RELATIVE_TO_GROUND:  relative height to the reference surface
+   //                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+   //                     extrudedHeight: 0.0, 
+   //                     extrudedHeightReference: Cesium.HeightReference.CLAMP_TO_GROUND, 
+   //                     // rotation: Cesium.Math.toRadians(45), 
+			//			// let ellipse rotate from north
+   //                     stRotation: 0.0, //  let ellipse rotate from north, anti clockwise
+   //                     granularity: Cesium.Math.RADIANS_PER_DEGREE, 
+   //                     fill: true, 
+   //                     material: Cesium.Color.RED.withAlpha(0.2),
+   //                     outline: true, 
+   //                     outlineColor: Cesium.Color.DARK_RED,
+   //                     outlineWidth: 200000.0,
+   //                     numberOfVerticalLines: 16, // number of lines alongside perimeter
+   //                     shadows: Cesium.ShadowMode.DISABLED,
+   //                     // distanceDisplayCondition: new Cesium.DistanceDisplayCondition(
+   //                     //   1.0e3,
+   //                     //   2.0e3
+   //                     // ),
+   //                     classificationType: Cesium.ClassificationType.BOTH,
+   //                 },
+   //             });
+			//	viewer.zoomTo(viewer.entities);-->
+
+
+            // draw rectangle---???need tobe corrected
+            //var avoid2 = viewer.entities.add({
+            //  name: "Avoid - traffic pattern EDSG",//Garbenstetten flugplatz
+            //  rectangle: {
+            //    coordinates: Cesium.Rectangle.fromDegrees(9.412508650053288,48.54343667939448, 9.43358457143229,48.54759972339579),
+            //    material: Cesium.Color.RED.withAlpha(0.5),
+            //    Rotation: Cesium.Math.toRadians(50),//---???
+            //  },
+            //});
+            //avoid2.position=Cesium.Cartesian3.fromDegrees(9.412508650053288,48.54343667939448);
+            ////avoid2.style.borderRadius = "25px";//---???
+
+
+            //draw line
+            var Segelflug = viewer.entities.add({
+              name: "Segelflug - 2970ft/900m",
+              wall :{
+                positions : Cesium.Cartesian3.fromDegreesArray(
+                  [9.39703519151607,48.529622848194435, 
+                   9.386956349001773,48.530292490420834,
+                   9.388908997194635,48.53648757756843,
+                   9.407899037160616,48.53512358676029,
+                   9.406954502423504,48.528754432235466,
+                   9.402340033389647,48.529216576652004]),
+                maximumHeights: [900,900,900,900,900,900],
+                minumumHeights: [0,0,0,0,0,0],
+                material: Cesium.Color.BLUE.withAlpha(0.5),
+              },
+            });
+
+            var Motorflug = viewer.entities.add({
+              name: "Motorflug - 3200ft/975m",
+              wall :{
+                positions : Cesium.Cartesian3.fromDegreesArray(
+                  [9.39703519151607,48.529622848194435, 
+                   9.37824396517381,48.53135453585247, 
+                   9.379830468769919,48.54176894670979,
+                   9.42008506241363,48.538955968904105,
+                   9.418325533250623, 48.52821407020955,
+                   9.402340033389647,48.529216576652004]),
+                maximumHeights: [975,975,975,975,975,975],
+                minumumHeights: [0,0,0,0,0,0],
+                material: Cesium.Color.BLUE.withAlpha(0.5),
+              },
+            });
+
+
+            //function for checkbox buttom
+            //function Check_PC1(){
+            //  //Show/hide point cloud for demo
+            //  if (document.getElementById('pc1_button').checked == true) { //if the buttons is checked
+            //    pc_demo1.show = true;// make the point cloud visible
+            //  }
+            //  else {
+            //    pc_demo1.show = false;// close the point cloud
+            //  }
+            //}
+
+            //function Check_PC2(){
+            //  //Show/hide point cloud for demo
+            //  if (document.getElementById('pc2_button').checked == true) { //if the buttons is checked
+            //    pc_demo2.show = true;// make the point cloud visible
+            //  }
+            //  else {
+            //    pc_demo2.show = false;// close the point cloud
+            //  }
+            //}
+
+            //function Check_PC3(){
+            //  //Show/hide point cloud for demo
+            //  if (document.getElementById('pc3_button').checked == true) { //if the buttons is checked
+            //    pc_demo3.show = true;// make the point cloud visible
+            //  }
+            //  else {
+            //    pc_demo3.show = false;// close the point cloud
+            //  }
+            //}
+
+            //function Check_OP1(){
+            //  //Show/hide point cloud for demo
+            //  if (document.getElementById('ortho1_button').checked == true) { //if the buttons is checked
+            //    ortho_demo1.show = true;// make the point cloud visible
+            //  }
+            //  else {
+            //    ortho_demo1.show = false;// close the point cloud
+            //  }
+            //}
+
+
+
+   //         //function for zoom buttom
+   //         function zoompc1(){
+   //           viewer.zoomTo(pc_demo1); // zoom to the tileset
+   //         };
+
+   //         function zoompc2(){
+   //           viewer.zoomTo(pc_demo2); // zoom to the tileset
+   //         };
+
+   //         function zoompc3(){
+   //           viewer.zoomTo(pc_demo3); // zoom to the tileset
+   //         };
+
+   //         function zoomortho1(){
+   //           viewer.zoomTo(ortho_demo1); // zoom to the tileset
+   //         };
+
+			//this.viewer.scene.fxaa = false;// 关闭fxaa  最新的cesium已经将fxaa移到PostProcessStageCollection
+
+
+            // Modifying home button position
+            viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function (e) {
+                e.cancel = true;
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromDegrees(9.398960475752261,
+                        48.529346010903474,
+                        6631.082799425431),
+                })
+            })
+
+
+
+
+        </script>
+    </article>
+</section>
+
+    <footer>
+      <p>This Website was created by WP8 in intergrated fieldwork 2022 conducted at the University of Stuttgart.</p>
+    </footer>     
+</body>
+</html>
